@@ -20,6 +20,20 @@ package { "libssl-dev":
     ensure => "installed"
 } 
 
+##########New Packages for Security modules############
+package { "liblua5.2":
+    ensure => "installed"
+}
+
+package { "libcurl4-openssl-dev":
+    ensure => "installed"
+}
+
+package { "libexpat1-dev":
+    ensure => "installed"
+}
+############# End of new packages ###############
+
 #file { [ "/usrdata/archive", "/usrdata/apps", "/usrdata/apps/appserver", "/usrdata/apps/sysapps", "/usrdata/apps/jiolib", "/usrdata/apps/sysapps/apr", "/usrdata/apps/sysapps/apr-util", "/usrdata/apps/sysapps/tomcat-native" ] :
 #    ensure => "directory",
 #} 
@@ -45,6 +59,20 @@ exec {'pkg-script':
   command => '/bin/sh /usrdata/archive/http-pkg-install.sh'
 } 
 
+#######New security install script###########
+
+file { '/usrdata/archive/security-install.sh':
+    owner => "jersey",
+    group => "servicesusrgroup",
+    mode => "755",
+    source => "puppet:///modules/staging/http-files/security-install.sh",
+} ->
+
+exec {'security-script':
+  command => '/bin/sh /usrdata/archive/security-install.sh
+}
+##################
+
 file { '/usrdata/apps/httpserver/conf/httpd.conf':
 #    owner => "jersey",
 #    group => "servicesusrgroup",
@@ -63,6 +91,12 @@ file { '/usrdata/apps/httpserver/conf/workers.properties':
 file { '/usrdata/apps/httpserver/conf/uriworkermap.properties':
     source => "puppet:///modules/staging/http-files/uriworkermap.properties",
 }
+
+########  New security conf file#############
+file { '/usrdata/apps/httpserver/conf/security.conf':
+    source => "puppet:///modules/staging/http-files/security.conf",
+}
+############# End of new#########################
 
 file { '/usrdata/archive/ufw.sh':
    source =>  "puppet:///modules/staging/http-files/ufw.sh",
