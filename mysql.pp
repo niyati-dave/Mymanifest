@@ -34,7 +34,8 @@ exec {"mysql-install":
  #path => "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
 } ->
 exec {"mysql-setup":
-              command => '/bin/sh -c "cd /usrdata/mysql; chown -R root /usrdata/mysql ; chown -R mysql /usrdata/mysql/data; mv /usrdata/mysql/my.cnf  /usrdata/mysql/my.cnf-org"',
+#command => '/bin/sh -c "cd /usrdata/mysql; chown -R root /usrdata/mysql ; chown -R mysql /usrdata/mysql/data; mv /usrdata/mysql/my.cnf  /usrdata/mysql/my.cnf-org"',
+              command => '/bin/sh -c "cd /usrdata/mysql; mv /usrdata/mysql/my.cnf  /usrdata/mysql/my.cnf-org"',
                 path =>"/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin",
 } ->
 
@@ -58,8 +59,7 @@ innodb_buffer_pool_size = 9000M
 #
 # Instead of skip-networking the default is now to listen only on
 # localhost which is more compatible and is not less secure.
-bind-address = 0.0.0.0
-
+#bind-address = 0.0.0.0
 key_buffer = 16M
 max_allowed_packet = 16M
 thread_stack            = 192K
@@ -75,12 +75,29 @@ file { '/etc/init.d/mysql.server':
   mode => 755,
 } ->
 
-exec {'mysql-start':
-    command => '/bin/sh -c "cd /usrdata/mysql; ./bin/mysqld_safe --user=mysql & "',
-     path => "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usrdata/mysql/bin",
+file { '/usrdata/mysql/startscript.sh':
+        ensure  => file,
+  content => '#!/bin/bash
+cd /usrdata/mysql/
+chown -R root /usrdata/mysql
+chown -R mysql /usrdata/mysql/data
+./bin/mysqld_safe --user=mysql &  > /usrdata/source/statuslog
+/etc/init.d/mysql.server start >> /usrdata/source/statuslog
+./bin/mysqladmin -u root password "root123" >> /usrdata/source/statuslog
+ps -ef | grep mysql > /usrdata/source/status',
+          mode => 755,
 } ->
 
-exec {'mysql-root':
-     command => "/usrdata/mysql/bin/mysqladmin -u root password 'root123'",
+exec { 'startscr':
+command => '/bin/bash /usrdata/mysql/startscript.sh',
 }
-       
+
+
+#exec {'mysql-start':
+#    command => '/bin/sh -c "cd /usrdata/mysql; ./bin/mysqld_safe --user=mysql &"',
+#     path => "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usrdata/mysql/bin",
+#} -> 
+
+#exec {'mysql-root':
+#     command => "/usrdata/mysql/bin/mysqladmin -u root password 'root123'",
+#}
